@@ -31,6 +31,7 @@ func appHMAC() *buffalo.App {
 	a.GET("/", h)
 	return a
 }
+
 func appRSA() *buffalo.App {
 	h := func(c buffalo.Context) error {
 		return c.Render(200, nil)
@@ -67,6 +68,19 @@ func appECDSA() *buffalo.App {
 	a := buffalo.New(buffalo.Options{})
 	a.Use(tokenauth.New(tokenauth.Options{
 		SignMethod: jwt.SigningMethodES256,
+	}))
+	a.GET("/", h)
+	return a
+}
+
+func appCustomAuthScheme() *buffalo.App {
+	h := func(c buffalo.Context) error {
+		return c.Render(200, nil)
+	}
+	envy.Set("JWT_SECRET", "secret")
+	a := buffalo.New(buffalo.Options{})
+	a.Use(tokenauth.New(tokenauth.Options{
+		AuthScheme: "Token",
 	}))
 	a.GET("/", h)
 	return a
@@ -253,5 +267,22 @@ func TestTokenRSAPSS(t *testing.T) {
 	tokenString, _ = token.SignedString(parsedKey)
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tokenString)
 	res = req.Get()
+	r.Equal(http.StatusOK, res.Code)
+}
+
+func TestAuthScheme(t *testing.T) {
+	r := require.New(t)
+	w := willie.New(appCustomAuthScheme())
+
+
+	req := w.Request("/")
+	claims := jwt.MapClaims{}
+	claims["sub"] = "1234567890"
+	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	secretKey := envy.Get("JWT_SECRET", "secret")
+	tokenString, _ := token.SignedString([]byte(secretKey))
+	req.Headers["Authorization"] = fmt.Sprintf("Token %s", tokenString)
+	res := req.Get()
 	r.Equal(http.StatusOK, res.Code)
 }
