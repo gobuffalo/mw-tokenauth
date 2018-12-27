@@ -17,6 +17,10 @@
 //           // Your Implementation here ...
 //      },
 //  }))
+// Default authorisation scheme is Bearer, you can specify your own.
+//  app.Use(tokenauth.New(tokenauth.Options{
+//      AuthScheme: "Token"
+//  }))
 //
 //
 // Creating a new token
@@ -43,12 +47,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gobuffalo/envy"
-
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/envy"
 	"github.com/pkg/errors"
 )
 
@@ -66,6 +68,7 @@ var (
 type Options struct {
 	SignMethod jwt.SigningMethod
 	GetKey     func(jwt.SigningMethod) (interface{}, error)
+	AuthScheme string
 }
 
 // New enables jwt token verification if no Sign method is provided,
@@ -84,12 +87,15 @@ func New(options Options) buffalo.MiddlewareFunc {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "couldn't get key"))
 	}
+	if options.AuthScheme == "" {
+		options.AuthScheme = "Bearer"
+	}
 	return func(next buffalo.Handler) buffalo.Handler {
 		return func(c buffalo.Context) error {
 			// get Authorisation header value
 			authString := c.Request().Header.Get("Authorization")
 
-			tokenString, err := getJwtToken(authString)
+			tokenString, err := getJwtToken(authString, options.AuthScheme)
 			// if error on getting the token, return with status unauthorized
 			if err != nil {
 				return c.Error(http.StatusUnauthorized, err)
@@ -172,17 +178,16 @@ func GetKeyECDSA(jwt.SigningMethod) (interface{}, error) {
 }
 
 // getJwtToken gets the token from the Authorisation header
-// removes the Bearer part from the authorisation header value.
+// removes the given authorisation scheme part (e.g. Bearer) from the authorisation header value.
 // returns No token error if Token is not found
-// returns Token Invalid error if the token value cannot be obtained by removing `Bearer `
-func getJwtToken(authString string) (string, error) {
+// returns Token Invalid error if the token value cannot be obtained by removing authorisation scheme part (e.g. `Bearer `)
+func getJwtToken(authString, authScheme string) (string, error) {
 	if authString == "" {
 		return "", ErrNoToken
 	}
-	splitToken := strings.Split(authString, "Bearer ")
-	if len(splitToken) != 2 {
-		return "", ErrTokenInvalid
+	l := len(authScheme)
+	if len(authString) > l+1 && authString[:l] == authScheme {
+		return authString[l+1:], nil
 	}
-	tokenString := splitToken[1]
-	return tokenString, nil
+	return "", ErrTokenInvalid
 }
