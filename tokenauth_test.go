@@ -10,11 +10,11 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gobuffalo/envy"
+	"github.com/gobuffalo/httptest"
 	"github.com/pkg/errors"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/mw-tokenauth"
-	"github.com/markbates/willie"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,14 +89,14 @@ func appCustomAuthScheme() *buffalo.App {
 // Test HMAC
 func TestTokenHMAC(t *testing.T) {
 	r := require.New(t)
-	w := willie.New(appHMAC())
+	w := httptest.New(appHMAC())
 
 	// Missing Authorization
-	res := w.Request("/").Get()
+	res := w.HTML("/").Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
 
 	// invalid token
-	req := w.Request("/")
+	req := w.HTML("/")
 	req.Headers["Authorization"] = "badcreds"
 	res = req.Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
@@ -127,14 +127,14 @@ func TestTokenHMAC(t *testing.T) {
 // Test RSA
 func TestTokenRSA(t *testing.T) {
 	r := require.New(t)
-	w := willie.New(appRSA())
+	w := httptest.New(appRSA())
 
 	// Missing Authorization
-	res := w.Request("/").Get()
+	res := w.HTML("/").Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
 
 	// invalid token
-	req := w.Request("/")
+	req := w.HTML("/")
 	req.Headers["Authorization"] = "badcreds"
 	res = req.Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
@@ -176,14 +176,14 @@ func TestTokenRSA(t *testing.T) {
 // Test ECDSA
 func TestTokenECDSA(t *testing.T) {
 	r := require.New(t)
-	w := willie.New(appECDSA())
+	w := httptest.New(appECDSA())
 
 	// Missing Authorization
-	res := w.Request("/").Get()
+	res := w.HTML("/").Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
 
 	// invalid token
-	req := w.Request("/")
+	req := w.HTML("/")
 	req.Headers["Authorization"] = "badcreds"
 	res = req.Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
@@ -224,14 +224,14 @@ func TestTokenECDSA(t *testing.T) {
 // Test RSAPSS
 func TestTokenRSAPSS(t *testing.T) {
 	r := require.New(t)
-	w := willie.New(appRSAPSS())
+	w := httptest.New(appRSAPSS())
 
 	// Missing Authorization
-	res := w.Request("/").Get()
+	res := w.HTML("/").Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
 
 	// invalid token
-	req := w.Request("/")
+	req := w.HTML("/")
 	req.Headers["Authorization"] = "badcreds"
 	res = req.Get()
 	r.Equal(http.StatusUnauthorized, res.Code)
@@ -272,10 +272,9 @@ func TestTokenRSAPSS(t *testing.T) {
 
 func TestAuthScheme(t *testing.T) {
 	r := require.New(t)
-	w := willie.New(appCustomAuthScheme())
+	w := httptest.New(appCustomAuthScheme())
 
-
-	req := w.Request("/")
+	req := w.HTML("/")
 	claims := jwt.MapClaims{}
 	claims["sub"] = "1234567890"
 	claims["exp"] = time.Now().Add(time.Minute * 5).Unix()
