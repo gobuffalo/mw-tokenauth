@@ -24,3 +24,4 @@ gin-bin
 .idea/
 .vscode
 cover.out
+go.sum
