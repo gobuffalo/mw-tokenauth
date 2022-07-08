@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/httptest"
+	tokenauth "github.com/gobuffalo/mw-tokenauth"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
-
-	"github.com/gobuffalo/buffalo"
-	tokenauth "github.com/gobuffalo/mw-tokenauth"
 	"github.com/stretchr/testify/require"
 )
 
