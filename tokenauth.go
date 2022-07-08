@@ -1,6 +1,6 @@
 // Package tokenauth provides jwt token authorisation middleware
-// supports HMAC, RSA, ECDSA, RSAPSS algorithms
-// uses github.com/dgrijalva/jwt-go for jwt implementation
+// supports HMAC, RSA, ECDSA, RSAPSS EdDSA algorithms
+// uses github.com/golang-jwt/jwt/v4 for jwt implementation
 //
 // Setting Up tokenauth middleware
 //
@@ -25,7 +25,7 @@
 //
 // Creating a new token
 //
-// This can be referred from the underlying JWT package being used https://github.com/dgrijalva/jwt-go
+// This can be referred from the underlying JWT package being used https://github.com/golang-jwt/jwt
 //
 // Example
 //  claims := jwt.MapClaims{}
@@ -48,9 +48,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
 
@@ -135,6 +135,8 @@ func selectGetKeyFunc(method jwt.SigningMethod) func(jwt.SigningMethod) (interfa
 		return GetKeyECDSA
 	case *jwt.SigningMethodRSAPSS:
 		return GetKeyRSAPSS
+	case *jwt.SigningMethodEd25519:
+		return GetkeyEdDSA
 	default:
 		return GetHMACKey
 	}
@@ -175,6 +177,19 @@ func GetKeyECDSA(jwt.SigningMethod) (interface{}, error) {
 		return nil, err
 	}
 	return jwt.ParseECPublicKeyFromPEM(keyData)
+}
+
+// GetKeyECDSA gets the public.pem file location from env and returns eddsa.PublicKey
+func GetkeyEdDSA(jwt.SigningMethod) (interface{}, error) {
+	key, err := envy.MustGet("JWT_PUBLIC_KEY")
+	if err != nil {
+		return nil, err
+	}
+	keyData, err := ioutil.ReadFile(key)
+	if err != nil {
+		return nil, err
+	}
+	return jwt.ParseEdPublicKeyFromPEM(keyData)
 }
 
 // getJwtToken gets the token from the Authorisation header
