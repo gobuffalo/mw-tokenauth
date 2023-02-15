@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
+	tokenauth "github.com/gobuffalo/mw-tokenauth"
+
+	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	"github.com/gobuffalo/httptest"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
-
-	"github.com/gobuffalo/buffalo"
-	tokenauth "github.com/gobuffalo/mw-tokenauth"
 	"github.com/stretchr/testify/require"
 )
 
@@ -161,7 +160,7 @@ func TestTokenRSA(t *testing.T) {
 	}
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(key)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error parsing key"))
+		log.Fatal("error parsing key:", err)
 	}
 	claims := jwt.MapClaims{}
 	claims["sub"] = "1234567890"
@@ -170,7 +169,7 @@ func TestTokenRSA(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	tokenString, err := token.SignedString(parsedKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error signing token"))
+		log.Fatal("error signing token:", err)
 	}
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tokenString)
 	res = req.Get()
@@ -206,11 +205,11 @@ func TestTokenEdDSA(t *testing.T) {
 	privateKeyFile := envy.Get("JWT_PRIVATE_KEY", "test_certs/ed25519-private.pem")
 	key, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error reading keyfile"))
+		log.Fatal("error reading keyfile:", err)
 	}
 	parsedKey, err := jwt.ParseEdPrivateKeyFromPEM(key)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error parsing key"))
+		log.Fatal("error parsing key:", err)
 	}
 	claims := jwt.MapClaims{}
 	claims["sub"] = "1234567890"
@@ -218,7 +217,7 @@ func TestTokenEdDSA(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims)
 	tokenString, err := token.SignedString(parsedKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error signing token"))
+		log.Fatal("error signing token:", err)
 	}
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tokenString)
 	res = req.Get()
@@ -254,11 +253,11 @@ func TestTokenECDSA(t *testing.T) {
 	privateKeyFile := envy.Get("JWT_PRIVATE_KEY", "test_certs/ec256-private.pem")
 	key, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error reading keyfile"))
+		log.Fatal("error reading keyfile:", err)
 	}
 	parsedKey, err := jwt.ParseECPrivateKeyFromPEM(key)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error parsing key"))
+		log.Fatal("error parsing key:", err)
 	}
 	claims := jwt.MapClaims{}
 	claims["sub"] = "1234567890"
@@ -266,7 +265,7 @@ func TestTokenECDSA(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 	tokenString, err := token.SignedString(parsedKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error signing token"))
+		log.Fatal("error signing token:", err)
 	}
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tokenString)
 	res = req.Get()
@@ -306,7 +305,7 @@ func TestTokenRSAPSS(t *testing.T) {
 	}
 	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM(key)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error parsing key"))
+		log.Fatal("error parsing key:", err)
 	}
 	claims := jwt.MapClaims{}
 	claims["sub"] = "1234567890"
@@ -315,7 +314,7 @@ func TestTokenRSAPSS(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodPS256, claims)
 	tokenString, err := token.SignedString(parsedKey)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "error signing token"))
+		log.Fatal("error signing token:", err)
 	}
 	req.Headers["Authorization"] = fmt.Sprintf("Bearer %s", tokenString)
 	res = req.Get()

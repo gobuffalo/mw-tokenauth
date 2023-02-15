@@ -44,6 +44,7 @@
 package tokenauth
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -51,7 +52,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -85,7 +85,7 @@ func New(options Options) buffalo.MiddlewareFunc {
 	key, err := options.GetKey(options.SignMethod)
 	// if error on getting key exit.
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "couldn't get key"))
+		log.Fatal("couldn't get key:", err)
 	}
 	if options.AuthScheme == "" {
 		options.AuthScheme = "Bearer"
